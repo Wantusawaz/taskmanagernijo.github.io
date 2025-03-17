@@ -1,0 +1,155 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+            form input, form textarea, form button {
+                margin-bottom: 10px;
+                padding: 10px;
+                font-size: 16px;
+            }
+
+        #task-list {
+            list-style: none;
+            padding: 0;
+        }
+
+            #task-list li {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px;
+                background: #f9f9f9;
+                margin-bottom: 10px;
+                border: 1px solid #ddd;
+            }
+
+                #task-list li.completed {
+                    text-decoration: line-through;
+                    color: #888;
+                }
+
+        button {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Task Manager ni lance</h1>
+        <form id="task-form">
+            <input type="text" id="task-title" placeholder="Task Title" required>
+            <textarea id="task-desc" placeholder="Task Description" required></textarea>
+            <input type="date" id="task-deadline" required>
+            <button type="submit">Add Task</button>
+        </form>
+        <ul id="task-list"></ul>
+    </div>
+    <script>document.addEventListener('DOMContentLoaded', function() {
+            const taskForm = document.getElementById('task-form');
+            const taskList = document.getElementById('task-list');
+
+            // Load tasks from localStorage
+            loadTasks();
+
+            taskForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                addTask();
+            });
+
+            taskList.addEventListener('click', function(e) {
+                if (e.target.classList.contains('complete-task')) {
+                    toggleTaskCompletion(e.target.parentElement);
+                } else if (e.target.classList.contains('delete-task')) {
+                    deleteTask(e.target.parentElement);
+                }
+            });
+
+            function addTask() {
+                const title = document.getElementById('task-title').value;
+                const desc = document.getElementById('task-desc').value;
+                const deadline = document.getElementById('task-deadline').value;
+
+                const task = {
+                    title,
+                    desc,
+                    deadline,
+                    completed: false
+                };
+
+                const tasks = getTasksFromStorage();
+                tasks.push(task);
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+
+                renderTask(task);
+                taskForm.reset();
+            }
+
+            function renderTask(task) {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span>${task.title} - ${task.desc} (Due: ${task.deadline})</span>
+                    <button class="complete-task">${task.completed ? 'Undo' : 'Complete'}</button>
+                    <button class="delete-task">Delete</button>
+                `;
+                if (task.completed) {
+                    li.classList.add('completed');
+                }
+                taskList.appendChild(li);
+            }
+
+            function loadTasks() {
+                const tasks = getTasksFromStorage();
+                tasks.forEach(task => renderTask(task));
+            }
+
+            function getTasksFromStorage() {
+                const tasks = localStorage.getItem('tasks');
+                return tasks ? JSON.parse(tasks) : [];
+            }
+
+            function toggleTaskCompletion(taskElement) {
+                const tasks = getTasksFromStorage();
+                const taskIndex = Array.from(taskList.children).indexOf(taskElement);
+                tasks[taskIndex].completed = !tasks[taskIndex].completed;
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+                taskElement.classList.toggle('completed');
+                taskElement.querySelector('.complete-task').textContent = tasks[taskIndex].completed ? 'Undo' : 'Complete';
+            }
+
+            function deleteTask(taskElement) {
+                const tasks = getTasksFromStorage();
+                const taskIndex = Array.from(taskList.children).indexOf(taskElement);
+                tasks.splice(taskIndex, 1);
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+                taskElement.remove();
+            }
+        });</script>
+</body>
+</html>
